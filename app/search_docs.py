@@ -9,11 +9,12 @@ from config import (
     QDRANT_PORT,
     TOP_K,
 )
+from graph import Document
 
-QUERY = 'I lost my job'
 
+def retrieve(query: str, top_k: int = TOP_K) -> list[Document]:
+    """Retrieve the most relevant documents for a query."""
 
-def main():
     # Load environment variables and initialise clients
     load_dotenv()
     openai_client = OpenAI()
@@ -22,22 +23,21 @@ def main():
     # Generate embedding for query
     embedding = openai_client.embeddings.create(
         model=EMBEDDING_MODEL,
-        input=QUERY,
+        input=query,
     ).data[0].embedding
 
     # Query Qdrant for most similar documents
     results = qdrant_client.query_points(
         collection_name=COLLECTION_NAME,
         query=embedding,
-        limit=TOP_K,
+        limit=top_k,
     )
 
-    # Display results
-    for i, point in enumerate(results.points, start=1):
-        print(f'\n{i}. {point.payload['title']}')
-        print(f'Score: {point.score:.3f}')
-        print(point.payload['content'])
-
-
-if __name__ == '__main__':
-    main()
+    return [
+        {
+            'title': point.payload['title'],
+            'content': point.payload['content'],
+            'score': point.score,
+        }
+        for point in results.points
+    ]

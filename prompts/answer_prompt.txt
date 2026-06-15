@@ -1,0 +1,7 @@
+Answer the user's question using only the provided documents.
+
+Question:
+{query}
+
+Documents:
+{documents}
