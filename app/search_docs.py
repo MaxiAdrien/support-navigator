@@ -9,10 +9,10 @@ from config import (
     QDRANT_PORT,
     TOP_K,
 )
-from graph import Document
+from app.schemas import RetrievedDocument
 
 
-def retrieve(query: str, top_k: int = TOP_K) -> list[Document]:
+def retrieve(query: str, top_k: int = TOP_K) -> list[RetrievedDocument]:
     """Retrieve the most relevant documents for a query."""
 
     # Load environment variables and initialise clients
@@ -35,9 +35,11 @@ def retrieve(query: str, top_k: int = TOP_K) -> list[Document]:
 
     return [
         {
-            'title': point.payload['title'],
-            'content': point.payload['content'],
-            'score': point.score,
+            "url": point.payload["url"],
+            "title": point.payload["title"],
+            "heading": point.payload.get("heading"),
+            "text": point.payload["text"],
+            "score": point.score,
         }
         for point in results.points
     ]

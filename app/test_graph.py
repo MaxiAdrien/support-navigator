@@ -1,6 +1,8 @@
-from graph import app
+# python -m app.test_graph
 
-QUERY = "I lost my job"
+from app.graph import app
+
+QUERY = "Can I get sick pay if I'm on maternity leave?"
 
 result = app.invoke(
     {

@@ -5,17 +5,13 @@ from langgraph.graph import START, END, StateGraph
 from openai import OpenAI
 
 from config import CHAT_MODEL, PROMPT_PATH
-from search_docs import retrieve
+from app.schemas import RetrievedDocument
+from app.search_docs import retrieve
 
-
-class Document(TypedDict):
-    title: str
-    content: str
-    score: float
 
 class State(TypedDict):
     query: str
-    documents: list[Document]
+    documents: list[RetrievedDocument]
     answer: str
 
 
@@ -37,9 +33,14 @@ def answer_node(state: State) -> State:
     """Generate an answer based on the query and retrieved documents."""
 
     # Format the retrieved documents into a string for the prompt
-    documents = '\n\n'.join(
-        f"Title: {doc['title']}\nContent: {doc['content']}"
-        for doc in state['documents']
+    documents = "\n\n---\n\n".join(
+        (
+            f"Title: {doc['title']}\n"
+            f"URL: {doc['url']}\n"
+            f"Heading: {doc['heading'] or 'N/A'}\n"
+            f"Text: {doc['text']}"
+        )
+        for doc in state["documents"]
     )
 
     # Read prompt template and format it with the query and documents
