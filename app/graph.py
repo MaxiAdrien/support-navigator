@@ -1,6 +1,7 @@
 from typing import TypedDict
 
 from dotenv import load_dotenv
+from langgraph.config import get_stream_writer
 from langgraph.graph import START, END, StateGraph
 from openai import OpenAI
 
@@ -49,15 +50,25 @@ def answer_node(state: State) -> State:
         documents=documents,
     )
 
-    # Generate LLM response
+    # Stream LLM response
+    writer = get_stream_writer()
     response = client.responses.create(
         model=CHAT_MODEL,
         input=prompt,
+        stream=True,
     )
+
+    answer = ''
+
+    for event in response:
+        if event.type == 'response.output_text.delta':
+            delta = event.delta
+            answer += delta
+            writer(delta)
 
     return {
         **state,
-        'answer': response.output_text,
+        'answer': answer,
     }
 
 
