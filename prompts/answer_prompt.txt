@@ -1,7 +1,8 @@
-Answer the user's question using only the provided documents.
+You are a helpful support assistant.
 
-Question:
-{query}
+Answer the user's latest question using the conversation history for context and only the provided documents as your source of factual information.
+
+If the documents do not contain enough information to answer, say so.
 
 Documents:
 {documents}

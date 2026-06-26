@@ -1,59 +1,80 @@
 import streamlit as st
+from langchain_core.messages import AIMessage, HumanMessage
 
 from app.graph import app
 
-st.set_page_config(
-    page_title='Support Navigator',
-    layout='wide',
-)
+st.set_page_config(page_title='Support Navigator', layout='wide')
 
 st.title('Support Navigator')
 
-query = st.text_input(
-    'Ask a question',
-    placeholder='Can I get Universal Credit if I work part-time?',
-)
+# Set up conversation state
+if 'history' not in st.session_state:
+    st.session_state.history = []
 
-if query:
-    spinner = st.empty()
-    spinner.info('Generating answer...')
+# Display previous conversation
+for turn in st.session_state.history:
+    with st.chat_message('user'):
+        st.markdown(turn['user'].content)
 
-    placeholder = st.empty()
-    answer = ''
+    with st.chat_message('assistant'):
+        st.markdown(turn['assistant'].content)
 
-    # Stream answer from the graph
-    for mode, chunk in app.stream(
-        {'query': query},
-        stream_mode=['custom', 'values'],
-    ):
-        if mode == 'custom':
-            spinner.empty()
-            answer += chunk
-            placeholder.markdown(answer + '▌')
+    if turn['documents']:
+        with st.expander('Most relevant pages'):
+            documents = sorted(turn['documents'], key=lambda doc: doc['score'], reverse=True)
 
-        elif mode == 'values':
-            result = chunk
+            for i, doc in enumerate(documents, start=1):
+                st.markdown(f"### {i}. {doc['title']}")
+                st.markdown(f"**Heading:** {doc['heading'] or 'Introduction'}")
+                st.markdown(f"**Relevance score:** `{doc['score']:.3f}`")
+                st.markdown(f"**URL:** {doc['url']}")
+                st.text(doc['text'])
+                st.divider()
 
-    placeholder.markdown(answer)
+# New turn
+if query := st.chat_input('Ask a question'):
+    human_message = HumanMessage(content=query)
 
-    # Retrieved chunks
-    st.header('Retrieved Chunks')
+    # Show user message
+    with st.chat_message('user'):
+        st.markdown(query)
 
-    documents = sorted(
-        result['documents'],
-        key=lambda doc: doc['score'],
-        reverse=True,
+    answer, state = '', {}
+
+    # Assistant response
+    with st.chat_message('assistant'):
+        spinner = st.empty()
+        spinner.info('Generating answer...')
+
+        placeholder = st.empty()
+
+        # Prepare messages for the graph
+        messages = [
+            message
+            for turn in st.session_state.history
+            for message in (turn['user'], turn['assistant'])
+        ]
+        messages.append(human_message)
+
+        # Stream answer from the graph
+        for mode, item in app.stream({'messages': messages}, stream_mode=['custom', 'values']):
+            if mode == 'custom':
+                spinner.empty()
+                answer += item
+                placeholder.markdown(answer + '▌')
+
+            elif mode == 'values':
+                state = item
+
+        placeholder.markdown(answer)
+
+    # Save completed turn
+    st.session_state.history.append(
+        {
+            'user': human_message,
+            'assistant': AIMessage(content=answer),
+            'documents': state['documents'] if state else [],
+        }
     )
 
-    for i, doc in enumerate(documents, start=1):
-        with st.expander(
-            f"{i}. {doc['title']} - {doc['heading'] or 'Introduction'} (score={doc['score']:.3f})",
-            expanded=(i == 1),
-        ):
-            st.markdown(f"**Score:** `{doc['score']:.3f}`")
-            st.markdown(f"**Title:** {doc['title']}")
-            st.markdown(f"**Heading:** {doc['heading'] or 'N/A'}")
-            st.markdown(f"**URL:** {doc['url']}")
-
-            st.markdown('**Text:**')
-            st.text(doc['text'])
+    st.rerun()
