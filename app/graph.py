@@ -1,9 +1,10 @@
 import structlog
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage
+from langchain_openai import ChatOpenAI
 from langgraph.config import get_stream_writer
 from langgraph.graph import START, END, StateGraph
-from openai import OpenAI
+from langsmith import traceable
 
 from config import ANSWER_PROMPT_PATH, CHAT_MODEL, REWRITE_PROMPT_PATH
 from app.graph_helpers import build_messages, format_documents
@@ -13,7 +14,7 @@ from app.schemas import State
 
 # Set-up
 load_dotenv()
-client = OpenAI()
+llm = ChatOpenAI(model=CHAT_MODEL)
 logger = structlog.get_logger('support_navigator.graph')
 
 # Load prompts
@@ -21,6 +22,7 @@ REWRITE_PROMPT = REWRITE_PROMPT_PATH.read_text(encoding='utf-8')
 ANSWER_PROMPT = ANSWER_PROMPT_PATH.read_text(encoding='utf-8')
 
 
+@traceable
 def rewrite_query(state: State) -> State:
     """Rewrite the latest user query to improve document retrieval."""
 
@@ -31,7 +33,7 @@ def rewrite_query(state: State) -> State:
     logger.info('llm_called', stage='rewrite', model=CHAT_MODEL, messages=len(messages))
 
     # Call LLM to rewrite the query
-    rewritten_query = client.responses.create(model=CHAT_MODEL, input=messages).output_text
+    rewritten_query = llm.invoke(messages).text
 
     # Log rewritten query
     logger.info('query_rewritten', chars=len(rewritten_query), preview=rewritten_query[:120])
@@ -42,6 +44,7 @@ def rewrite_query(state: State) -> State:
     }
 
 
+@traceable
 def retrieve_node(state: State) -> State:
     """Retrieve relevant documents for the latest user message."""
 
@@ -57,6 +60,7 @@ def retrieve_node(state: State) -> State:
     }
 
 
+@traceable
 def answer_node(state: State) -> State:
     """Generate an answer based on the conversation and retrieved documents."""
 
@@ -74,14 +78,14 @@ def answer_node(state: State) -> State:
 
     # Stream LLM response
     writer = get_stream_writer()
-    response = client.responses.create(model=CHAT_MODEL, input=messages, stream=True)
 
     answer = ''
 
-    for event in response:
-        if event.type == 'response.output_text.delta':
-            answer += event.delta
-            writer(event.delta)
+    for chunk in llm.stream(messages):
+        delta = chunk.text
+        if delta:
+            answer += delta
+            writer(delta)
 
     # Log answer generation
     logger.info('answer_generated', chars=len(answer))
