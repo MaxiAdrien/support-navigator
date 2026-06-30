@@ -1,5 +1,9 @@
 from pathlib import Path
 
+# API
+API_URL = 'http://localhost:8000/chat/stream'
+API_TIMEOUT_SECONDS = 120
+
 # Rewrite query
 REWRITE_PROMPT_PATH = Path('prompts/rewrite_query.txt')
 
