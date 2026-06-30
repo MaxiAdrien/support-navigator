@@ -4,7 +4,7 @@ from uuid import NAMESPACE_URL, uuid5
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
-from config import CHUNKS_JSON_FILENAME, COLLECTION_NAME, QDRANT_HOST, QDRANT_PORT, VECTOR_SIZE
+from config import CHUNKS_JSON_FILENAME, COLLECTION_NAME, QDRANT_API_KEY, QDRANT_URL, VECTOR_SIZE
 from ingest.models import read_chunks
 
 
@@ -20,7 +20,7 @@ def ingest_docs(doc_dirs: list[Path], batch_size: int = 256) -> int:
     - If a chunk with the same content hash already exists in the collection, it will be skipped.
     - Returns the number of chunks that were upserted into the collection.
     """
-    client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+    client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
 
     if not client.collection_exists(COLLECTION_NAME):
         client.create_collection(

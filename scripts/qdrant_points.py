@@ -2,11 +2,11 @@ import argparse
 
 from qdrant_client import QdrantClient
 
-from config import COLLECTION_NAME, QDRANT_HOST, QDRANT_PORT
+from config import COLLECTION_NAME, QDRANT_API_KEY, QDRANT_URL
 
 
 def build_client() -> QdrantClient:
-    return QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+    return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
 
 
 def list_points(client: QdrantClient, limit: int) -> None:

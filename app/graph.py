@@ -1,5 +1,4 @@
 import structlog
-from dotenv import load_dotenv
 from langchain_core.messages import AIMessage
 from langchain_openai import ChatOpenAI
 from langgraph.config import get_stream_writer
@@ -13,7 +12,6 @@ from app.schemas import State
 
 
 # Set-up
-load_dotenv()
 llm = ChatOpenAI(model=CHAT_MODEL)
 logger = structlog.get_logger('support_navigator.graph')
 

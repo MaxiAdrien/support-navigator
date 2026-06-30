@@ -4,6 +4,7 @@ from typing import Literal
 from uuid import uuid4
 
 import structlog
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
@@ -14,7 +15,8 @@ from app.graph import app as graph_app
 from app.logging_config import configure_logging
 
 
-# Configure logging and FastAPI application
+# Set-up
+load_dotenv()
 configure_logging()
 logger = structlog.get_logger('support_navigator.api')
 app = FastAPI(title='Support Navigator API')
@@ -49,7 +51,7 @@ def build_messages(history: list[ChatMessage], query: str) -> list[BaseMessage]:
 def generate_chat_stream(messages: list[BaseMessage]) -> Iterator[str]:
     """Generator function to stream chat responses from the graph."""
 
-    # Initialize answer and state
+    # Initialise answer and state
     answer, state = '', {}
 
     # Stream from the graph

@@ -1,12 +1,11 @@
-from dotenv import load_dotenv
 from openai import OpenAI
 from qdrant_client import QdrantClient
 
 from config import (
     COLLECTION_NAME,
     EMBEDDING_MODEL,
-    QDRANT_HOST,
-    QDRANT_PORT,
+    QDRANT_API_KEY,
+    QDRANT_URL,
     TOP_K,
 )
 from app.schemas import RetrievedDocument
@@ -15,10 +14,9 @@ from app.schemas import RetrievedDocument
 def retrieve(query: str, top_k: int = TOP_K) -> list[RetrievedDocument]:
     """Retrieve the most relevant documents for a query."""
 
-    # Load environment variables and initialise clients
-    load_dotenv()
+    # Initialise clients
     openai_client = OpenAI()
-    qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+    qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
 
     # Generate embedding for query
     embedding = openai_client.embeddings.create(

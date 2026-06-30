@@ -45,7 +45,7 @@ if query := st.chat_input('Ask a question'):
     with st.chat_message('user'):
         st.markdown(query)
 
-    # Initialize answer and state (to be streamed from the graph)
+    # Initialise answer and state (to be streamed from the graph)
     answer, state = '', {}
 
     # Assistant response
