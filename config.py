@@ -9,6 +9,12 @@ load_dotenv()
 # API
 API_URL = os.environ.get('API_URL', 'http://localhost:8000/chat/stream')
 API_TIMEOUT_SECONDS = int(os.environ.get('API_TIMEOUT_SECONDS', 60))
+CHAT_RATE_LIMIT = os.environ.get('CHAT_RATE_LIMIT', '5/minute')
+API_ALLOWED_ORIGINS = [
+	origin.strip()
+	for origin in os.environ.get('API_ALLOWED_ORIGINS', 'https://support-navigator.streamlit.app').split(',')
+	if origin.strip()
+]
 
 # Rewrite query
 REWRITE_PROMPT_PATH = Path('prompts/rewrite_query.txt')
