@@ -30,6 +30,8 @@ TOP_K = int(os.environ.get('TOP_K', 3))
 # Answer
 ANSWER_PROMPT_PATH = Path('prompts/answer_query.txt')
 CHAT_MODEL = os.environ.get('CHAT_MODEL', 'gpt-5-mini')
+INPUT_MAX_TOKENS = int(os.environ.get('INPUT_MAX_TOKENS', 1024))
+OUTPUT_MAX_TOKENS = int(os.environ.get('OUTPUT_MAX_TOKENS', 1024))
 
 # Ingest artifacts
 DATA_DIR = Path('data')

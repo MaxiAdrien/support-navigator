@@ -5,14 +5,14 @@ from langgraph.config import get_stream_writer
 from langgraph.graph import START, END, StateGraph
 from langsmith import traceable
 
-from config import ANSWER_PROMPT_PATH, CHAT_MODEL, REWRITE_PROMPT_PATH
+from config import ANSWER_PROMPT_PATH, CHAT_MODEL, OUTPUT_MAX_TOKENS, REWRITE_PROMPT_PATH
 from app.graph_helpers import build_messages, format_documents
 from app.search_docs import retrieve
 from app.schemas import State
 
 
 # Set-up
-llm = ChatOpenAI(model=CHAT_MODEL)
+llm = ChatOpenAI(model=CHAT_MODEL, max_tokens=OUTPUT_MAX_TOKENS)
 logger = structlog.get_logger('support_navigator.graph')
 
 # Load prompts

@@ -5,17 +5,18 @@ from uuid import uuid4
 
 import structlog
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from structlog.contextvars import bind_contextvars, clear_contextvars
 
-from config import API_ALLOWED_ORIGINS, CHAT_RATE_LIMIT
+from config import API_ALLOWED_ORIGINS, CHAT_MODEL, CHAT_RATE_LIMIT, INPUT_MAX_TOKENS
 from app.graph import app as graph_app
 from app.logging_config import configure_logging
 
@@ -25,6 +26,7 @@ load_dotenv()
 configure_logging()
 logger = structlog.get_logger('support_navigator.api')
 app = FastAPI(title='Support Navigator API')
+token_counter = ChatOpenAI(model=CHAT_MODEL)
 
 # Configure CORS middleware to allow requests from specified origins only
 app.add_middleware(
@@ -125,6 +127,12 @@ def chat_stream(request: Request, chat_request: ChatRequest) -> StreamingRespons
 
     # Log user query
     logger.info('user_query_received', chars=len(chat_request.query), preview=chat_request.query[:120])
+
+    # Reject requests that exceed input token limit
+    token_count = token_counter.get_num_tokens(chat_request.query)
+    if token_count > INPUT_MAX_TOKENS:
+        logger.info('input_token_limit_exceeded', input_tokens=token_count, input_max_tokens=INPUT_MAX_TOKENS)
+        raise HTTPException(status_code=413, detail='Input is too long. Please shorten your message.')
 
     # Build messages from history and current query
     messages = build_messages(chat_request.history, chat_request.query)
