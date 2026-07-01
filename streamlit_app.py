@@ -4,7 +4,7 @@ import requests
 import streamlit as st
 import structlog
 
-from config import API_SHARED_KEY, API_TIMEOUT_SECONDS, API_URL
+from config import API_SHARED_KEY, API_TIMEOUT_SECONDS, API_URL, SUGGESTED_QUERIES
 from app.logging_config import configure_logging
 
 # Set up logging
@@ -32,15 +32,21 @@ for turn in st.session_state.history:
             documents = sorted(turn['documents'], key=lambda doc: doc['score'], reverse=True)
 
             for i, doc in enumerate(documents, start=1):
-                st.markdown(f"### {i}. {doc['title']}")
-                st.markdown(f"**Heading:** {doc['heading'] or 'Introduction'}")
-                st.markdown(f"**Relevance score:** `{doc['score']:.3f}`")
-                st.markdown(f"**URL:** {doc['url']}")
-                st.divider()
+                st.markdown(f"**{i}. {doc['title']}: {doc['heading'] or 'Introduction'}**")
+                st.markdown(doc['url'])
 
 # New turn
-if query := st.chat_input('Ask a question'):
+query = st.chat_input('Ask about benefits, food banks, sick pay, right to work in the UK...')
 
+# Query suggestions
+if not query:
+    st.caption('Try one of these, or enter any question about UK support below.')
+    columns = st.columns(len(SUGGESTED_QUERIES))
+    for index, suggested_query in enumerate(SUGGESTED_QUERIES):
+        if columns[index].button(suggested_query, key=f'suggested_query_{index}'):
+            query = suggested_query
+
+if query:
     # Show user message
     with st.chat_message('user'):
         st.markdown(query)
