@@ -4,7 +4,7 @@ import requests
 import streamlit as st
 import structlog
 
-from config import API_TIMEOUT_SECONDS, API_URL
+from config import API_SHARED_KEY, API_TIMEOUT_SECONDS, API_URL
 from app.logging_config import configure_logging
 
 # Set up logging
@@ -70,7 +70,13 @@ if query := st.chat_input('Ask a question'):
 
         # Send request to API
         try:
-            with requests.post(API_URL, json=request_payload, stream=True, timeout=API_TIMEOUT_SECONDS) as response:
+            with requests.post(
+                API_URL,
+                json=request_payload,
+                headers={'X-API-Key': API_SHARED_KEY},
+                stream=True,
+                timeout=API_TIMEOUT_SECONDS,
+            ) as response:
 
                 # Check for HTTP errors
                 response.raise_for_status()

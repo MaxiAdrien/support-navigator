@@ -1,11 +1,12 @@
 import json
 from collections.abc import Iterator
+from secrets import compare_digest
 from typing import Literal
 from uuid import uuid4
 
 import structlog
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
@@ -16,7 +17,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from structlog.contextvars import bind_contextvars, clear_contextvars
 
-from config import API_ALLOWED_ORIGINS, CHAT_MODEL, CHAT_RATE_LIMIT, INPUT_MAX_TOKENS
+from config import API_ALLOWED_ORIGINS, API_SHARED_KEY, CHAT_MODEL, CHAT_RATE_LIMIT, INPUT_MAX_TOKENS
 from app.graph import app as graph_app
 from app.logging_config import configure_logging
 
@@ -51,6 +52,13 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     query: str = Field(..., min_length=1)
     history: list[ChatMessage] = Field(default_factory=list)
+
+
+def require_api_key(x_api_key: str | None = Header(default=None, alias='X-API-Key')) -> None:
+    """Require the shared API key header for all requests."""
+
+    if not compare_digest(x_api_key, API_SHARED_KEY):
+        raise HTTPException(status_code=401, detail='Invalid API key.')
 
 
 def build_messages(history: list[ChatMessage], query: str) -> list[BaseMessage]:
@@ -114,7 +122,11 @@ def health() -> dict[str, str]:
 
 @app.post('/chat/stream')
 @limiter.limit(CHAT_RATE_LIMIT)
-def chat_stream(request: Request, chat_request: ChatRequest) -> StreamingResponse:
+def chat_stream(
+    request: Request,
+    chat_request: ChatRequest,
+    _api_key: None = Depends(require_api_key),
+) -> StreamingResponse:
     """
     Stream a chat response based on the user's query and conversation history.
     Note: "request: Request" argument is required for SlowAPI rate limiter.
