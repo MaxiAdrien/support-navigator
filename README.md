@@ -1,12 +1,24 @@
 # Support Navigator
 
-## Prerequisites
+AI-powered welfare support chatbot using LangGraph, FastAPI, BeautifulSoup, Qdrant, OpenAI, and LangSmith.
+
+## Try it out
+
+![Support Navigator](assets/demo.png)
+
+**🔗 Live demo:** https://support-navigator.streamlit.app
+
+The LLM budget is only $1/month for now, so please be considerate when using the app :)
+
+## Run it locally
+
+### Prerequisites
 
 - Python 3.13
 - An OpenAI API key (`OPENAI_API_KEY`)
 - A running Qdrant instance (default: `http://localhost:6333`)
 
-## Install
+### Install
 
 ```bash
 python -m venv .venv
@@ -14,7 +26,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Configure environment
+### Configure environment
 
 Copy `.env.example` to `.env` and fill in the values:
 
@@ -22,7 +34,13 @@ Copy `.env.example` to `.env` and fill in the values:
 cp .env.example .env
 ```
 
-## Run the API
+For the shared API key, set a value that both the API and Streamlit app can read:
+
+```bash
+API_SHARED_KEY=replace-with-a-long-random-value
+```
+
+### Run the API
 
 ```bash
 uvicorn api:app --host 0.0.0.0 --port 8000 --reload
@@ -34,7 +52,7 @@ Optional health check:
 curl http://localhost:8000/health
 ```
 
-## Run Streamlit
+### Run Streamlit
 
 In a second terminal (same virtual environment):
 
