@@ -19,6 +19,34 @@ st.title('Support Navigator')
 if 'history' not in st.session_state:
     st.session_state.history = []
 
+# Set up current query
+query = None
+
+# Sidebar
+with st.sidebar:
+
+    # App description
+    st.write(
+        """
+        This app helps you find information about help and support available in the UK.
+        You can also ask about benefits, work, housing, money, and other related topics.
+        The information is sourced from the Citizens Advice website.
+        """
+    )
+
+    # Query suggestions
+    st.caption('Try one of these:')
+    for index, suggested_query in enumerate(SUGGESTED_QUERIES):
+        if st.button(suggested_query, key=f'suggested_query_{index}'):
+            query = suggested_query
+
+    st.divider()
+
+    # Start new conversation button
+    if st.button('Clear history'):
+        st.session_state.history = []
+        st.rerun()
+
 # Display previous conversation
 for turn in st.session_state.history:
     with st.chat_message('user'):
@@ -28,23 +56,20 @@ for turn in st.session_state.history:
         st.markdown(turn['assistant'])
 
     if turn['documents']:
-        with st.expander('Most relevant pages'):
+        with st.expander('Most relevant web pages'):
             documents = sorted(turn['documents'], key=lambda doc: doc['score'], reverse=True)
+            seen_urls = set()
 
-            for i, doc in enumerate(documents, start=1):
-                st.markdown(f"**{i}. {doc['title']}: {doc['heading'] or 'Introduction'}**")
-                st.markdown(doc['url'])
+            for doc in documents:
+                url = doc.get('url')
+                if not url or url in seen_urls:
+                    continue
+                seen_urls.add(url)
+                st.markdown(f"- **{doc.get('title', 'Untitled')}**")
+                st.markdown(f"{url}")
 
 # New turn
-query = st.chat_input('Ask about benefits, food banks, sick pay, right to work in the UK...')
-
-# Query suggestions
-if not query:
-    st.caption('Try one of these, or enter any question about UK support below.')
-    columns = st.columns(len(SUGGESTED_QUERIES))
-    for index, suggested_query in enumerate(SUGGESTED_QUERIES):
-        if columns[index].button(suggested_query, key=f'suggested_query_{index}'):
-            query = suggested_query
+query = query or st.chat_input('Ask about benefits, food banks, sick pay, right to work in the UK...')
 
 if query:
     # Show user message
