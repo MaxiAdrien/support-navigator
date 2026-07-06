@@ -13,7 +13,6 @@ logger = structlog.get_logger('support_navigator.ui')
 
 # Set up Streamlit page
 st.set_page_config(page_title='Support Navigator', layout='wide')
-st.title('Support Navigator')
 
 # Set up conversation state
 if 'history' not in st.session_state:
@@ -24,15 +23,6 @@ query = None
 
 # Sidebar
 with st.sidebar:
-
-    # App description
-    st.write(
-        """
-        This app helps you find information about help and support available in the UK.
-        You can also ask about benefits, work, housing, money, and other related topics.
-        The information is sourced from the Citizens Advice website.
-        """
-    )
 
     # Query suggestions
     st.caption('Try one of these:')
@@ -46,6 +36,20 @@ with st.sidebar:
     if st.button('Clear history'):
         st.session_state.history = []
         st.rerun()
+
+st.chat_message('assistant').markdown(
+    """👋 **Hi, I'm Support Navigator.**
+
+I can help you understand UK support and your rights using information from Citizens Advice. You can ask me about:
+
+* **Benefits** – Universal Credit, Housing Benefit, JSA, ESA, PIP, DLA, Pension Credit, Child Benefit, Carer's Allowance, Tax Credits, eligibility, payments, and how to claim.
+* **Work** – pay, sick pay, working hours, holidays, maternity rights, dismissal, redundancy, discrimination, workplace rights, and the right to work.
+* **Money** – cost of living support, debt, food banks, gambling-related financial problems, and help with essential costs.
+* **Bills and consumer issues** – energy, water, phone and internet bills, insurance, switching energy supplier, and scams.
+* **Housing** – renting, rent increases, eviction, homelessness, housing costs, Council Tax, and housing discrimination.
+* **Other support** – health services, immigration-related benefit questions, support after separation, and help for victims of trafficking.
+    """
+)
 
 # Display previous conversation
 for turn in st.session_state.history:

@@ -7,8 +7,6 @@ from bs4 import BeautifulSoup, Tag
 from config import PARSED_JSON_FILENAME, RAW_HTML_FILENAME
 from ingest.models import Block, Link, ListItem, ParsedDocument, Section, write_parsed_document
 
-# TODO: Include cads-callout and cads-targeted-content sections in parsing
-
 
 def extract_text(element: Tag) -> str:
     """Extracts and cleans the text content from the given HTML element."""
@@ -25,6 +23,20 @@ def extract_links(element: Tag, base_url: str) -> list[Link]:
         Link(text=extract_text(anchor), url=urljoin(base_url, anchor["href"]))
         for anchor in element.find_all("a", href=True)
     ]
+
+
+def iter_content_elements(parent: Tag):
+    """Yield content tags in document order, including known nested wrappers."""
+    for element in parent.children:
+        if not isinstance(element, Tag):
+            continue
+
+        if element.name in {"h2", "h3", "h4", "p", "ul"}:
+            yield element
+            continue
+
+        if element.name in {"div", "section"}:
+            yield from iter_content_elements(element)
 
 
 def extract_web_page(doc_dir: Path) -> Path:
@@ -63,39 +75,51 @@ def extract_web_page(doc_dir: Path) -> Path:
     sections: list[Section] = []
     current_section = Section(heading=None, blocks=[])
 
-    for element in content.children:
-        if not isinstance(element, Tag):
-            continue
-
+    for element in iter_content_elements(content):
         if element.name == "h2":
             heading = extract_text(element)
+            if not heading:
+                continue
             if heading.lower() == "next steps":
                 break
             if current_section.blocks:
                 sections.append(current_section)
             current_section = Section(heading=heading, blocks=[])
-        elif element.name == "h3":
+
+        elif element.name in {"h3", "h4"}:
+            text = extract_text(element)
+            if not text:
+                continue
             current_section.blocks.append(
-                Block(type="subheading", text=extract_text(element))
+                Block(type="subheading", text=text)
             )
+
         elif element.name == "p":
+            text = extract_text(element)
+            if not text:
+                continue
             current_section.blocks.append(
                 Block(
                     type="paragraph",
-                    text=extract_text(element),
+                    text=text,
                     links=extract_links(element, url),
                 )
             )
+
         elif element.name == "ul":
             items: list[ListItem] = []
             for li in element.find_all("li", recursive=False):
+                text = extract_text(li)
+                if not text:
+                    continue
                 items.append(
                     ListItem(
-                        text=extract_text(li),
+                        text=text,
                         links=extract_links(li, url),
                     )
                 )
-            current_section.blocks.append(Block(type="list", items=items))
+            if items:
+                current_section.blocks.append(Block(type="list", items=items))
 
     if current_section.blocks:
         sections.append(current_section)
@@ -110,4 +134,5 @@ def extract_web_page(doc_dir: Path) -> Path:
 
     output_path = doc_dir / PARSED_JSON_FILENAME
     write_parsed_document(output_path, document)
+
     return output_path
