@@ -15,3 +15,10 @@ python3 -m scripts.qdrant_points count
 # Delete specific points by ID.
 python3 -m scripts.qdrant_points delete --ids <id1> <id2>
 ```
+
+Chunk QA helper:
+
+```bash
+# Print each chunk for side-by-side QA against the source web page
+python3 -m scripts.print_chunks data/documents/<doc_id>/chunks.json
+```
