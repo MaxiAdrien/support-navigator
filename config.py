@@ -27,7 +27,7 @@ SUGGESTED_QUERIES = [
 ]
 
 # Rewrite query
-REWRITE_PROMPT_PATH = Path('prompts/rewrite_query.txt')
+REWRITE_PROMPT_PATH = Path('app/prompts/rewrite_query.txt')
 
 # Retrieval
 EMBEDDING_MODEL = os.environ.get('EMBEDDING_MODEL', 'text-embedding-3-large')
@@ -38,7 +38,7 @@ QDRANT_API_KEY = os.environ.get('QDRANT_API_KEY')
 TOP_K = int(os.environ.get('TOP_K', 3))
 
 # Answer
-ANSWER_PROMPT_PATH = Path('prompts/answer_query.txt')
+ANSWER_PROMPT_PATH = Path('app/prompts/answer_query.txt')
 CHAT_MODEL = os.environ.get('CHAT_MODEL', 'gpt-5-mini')
 INPUT_MAX_TOKENS = int(os.environ.get('INPUT_MAX_TOKENS', 1024))
 OUTPUT_MAX_TOKENS = int(os.environ.get('OUTPUT_MAX_TOKENS', 1024))
