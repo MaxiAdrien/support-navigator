@@ -1,5 +1,5 @@
-from openai import OpenAI
-from qdrant_client import QdrantClient
+from openai import AsyncOpenAI
+from qdrant_client import AsyncQdrantClient
 
 from config import (
     COLLECTION_NAME,
@@ -11,21 +11,22 @@ from config import (
 from app.schemas import RetrievedDocument
 
 
-def retrieve(query: str, top_k: int = TOP_K) -> list[RetrievedDocument]:
+async def retrieve(query: str, top_k: int = TOP_K) -> list[RetrievedDocument]:
     """Retrieve the most relevant documents for a query."""
 
     # Initialise clients
-    openai_client = OpenAI()
-    qdrant_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+    openai_client = AsyncOpenAI()
+    qdrant_client = AsyncQdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
 
     # Generate embedding for query
-    embedding = openai_client.embeddings.create(
+    embedding_response = await openai_client.embeddings.create(
         model=EMBEDDING_MODEL,
         input=query,
-    ).data[0].embedding
+    )
+    embedding = embedding_response.data[0].embedding
 
     # Query Qdrant for most similar documents
-    results = qdrant_client.query_points(
+    results = await qdrant_client.query_points(
         collection_name=COLLECTION_NAME,
         query=embedding,
         limit=top_k,

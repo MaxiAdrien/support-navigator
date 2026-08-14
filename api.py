@@ -1,5 +1,5 @@
 import json
-from collections.abc import Iterator
+from collections.abc import AsyncIterator
 from secrets import compare_digest
 from typing import Literal
 from uuid import uuid4
@@ -77,7 +77,7 @@ def build_messages(history: list[ChatMessage], query: str) -> list[BaseMessage]:
     return messages
 
 
-def generate_chat_stream(messages: list[BaseMessage]) -> Iterator[str]:
+async def generate_chat_stream(messages: list[BaseMessage]) -> AsyncIterator[str]:
     """Generator function to stream chat responses from the graph."""
 
     # Initialise answer and state
@@ -85,7 +85,7 @@ def generate_chat_stream(messages: list[BaseMessage]) -> Iterator[str]:
 
     # Stream from the graph
     try:
-        for mode, item in graph_app.stream({'messages': messages}, stream_mode=['custom', 'values']):
+        async for mode, item in graph_app.astream({'messages': messages}, stream_mode=['custom', 'values']):
 
             # Answer tokens
             if mode == 'custom':
@@ -122,7 +122,7 @@ def health() -> dict[str, str]:
 
 @app.post('/chat/stream')
 @limiter.limit(CHAT_RATE_LIMIT)
-def chat_stream(
+async def chat_stream(
     request: Request,
     chat_request: ChatRequest,
     _api_key: None = Depends(require_api_key),
@@ -139,6 +139,7 @@ def chat_stream(
 
     # Log user query
     logger.info('user_query_received', chars=len(chat_request.query), preview=chat_request.query[:120])
+    # TODO: Make sure that request_id is included in all other logs
 
     # Reject requests that exceed input token limit
     token_count = token_counter.get_num_tokens(chat_request.query)

@@ -1,8 +1,8 @@
+![Support Navigator](assets/demo.png)
+
 # Support Navigator
 
 AI-powered welfare support chatbot using LangGraph, FastAPI, BeautifulSoup, Qdrant, OpenAI, and LangSmith.
-
-![Support Navigator](assets/demo.png)
 
 ## Try it out
 

@@ -21,7 +21,7 @@ ANSWER_PROMPT = ANSWER_PROMPT_PATH.read_text(encoding='utf-8')
 
 
 @traceable
-def rewrite_query(state: State) -> State:
+async def rewrite_query(state: State) -> State:
     """Rewrite the latest user query to improve document retrieval."""
 
     # Build messages for LLM
@@ -31,7 +31,7 @@ def rewrite_query(state: State) -> State:
     logger.info('llm_called', stage='rewrite', model=CHAT_MODEL, messages=len(messages))
 
     # Call LLM to rewrite the query
-    rewritten_query = llm.invoke(messages).text
+    rewritten_query = (await llm.ainvoke(messages)).text
 
     # Log rewritten query
     logger.info('query_rewritten', chars=len(rewritten_query), preview=rewritten_query[:120])
@@ -43,11 +43,11 @@ def rewrite_query(state: State) -> State:
 
 
 @traceable
-def retrieve_node(state: State) -> State:
+async def retrieve_node(state: State) -> State:
     """Retrieve relevant documents for the latest user message."""
 
     # Retrieve documents
-    documents = retrieve(state['rewritten_query'])
+    documents = await retrieve(state['rewritten_query'])
 
     # Log retrieval
     logger.info('docs_retrieved', count=len(documents), top_score=documents[0].get('score') if documents else None)
@@ -59,7 +59,7 @@ def retrieve_node(state: State) -> State:
 
 
 @traceable
-def answer_node(state: State) -> State:
+async def answer_node(state: State) -> State:
     """Generate an answer based on the conversation and retrieved documents."""
 
     # Format the retrieved documents into a string for the prompt
@@ -79,7 +79,7 @@ def answer_node(state: State) -> State:
 
     answer = ''
 
-    for chunk in llm.stream(messages):
+    async for chunk in llm.astream(messages):
         delta = chunk.text
         if delta:
             answer += delta
