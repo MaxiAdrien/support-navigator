@@ -4,14 +4,6 @@
 
 AI-powered welfare support chatbot using LangGraph, FastAPI, BeautifulSoup, Qdrant, OpenAI, and LangSmith.
 
-## Try it out
-
-**🔗 Live demo:** https://support-navigator.streamlit.app
-
-Notes:
-- The LLM budget is currently limited, so please be considerate when using the app :)
-- Both the frontend and backend shut down after inactivity. You may need to "wake up" the Streamlit frontend, and the first request may take a few minutes to respond. After that, latency is typically 10-15 seconds per request.
-
 ## Project architecture
 
 ![Support Navigator](assets/architecture.svg)
